@@ -1,11 +1,61 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { auth,provider } from "../firebase";
 import styled from 'styled-components';
+import {selectUserName,selectUserPhoto,setUserLogin,setSignOut} from "../features/user/userSlice";
+import {useSelector,useDispatch} from "react-redux";
+import {useHistory} from 'react-router-dom';
 
 function Header() {
+    const dispatch = useDispatch()
+    const history = useHistory()
+    const userName = useSelector(selectUserName);
+    const userPhoto = useSelector(selectUserPhoto);
+    
+    useEffect(()=>{
+        auth.onAuthStateChanged(async (user)=>{
+            if(user){
+                dispatch(setUserLogin({
+                    name: user.displayName,
+                    email: user.email,
+                    photo:user.photoURL
+                }))
+            history.push('/')
+            }
+        })
+    },[])
+
+    const signIn = () =>{
+        auth.signInWithPopup(provider)
+        .then((result)=>{
+            let user = result.user;
+            console.log(result)
+            dispatch(setUserLogin({
+                name: user.displayName,
+                email: user.email,
+                photo:user.photoURL
+            }))
+            history.push('/')
+        })
+    }
+
+    const signOut = () => {
+        auth.signOut()
+        .then(()=>{
+            dispatch(setSignOut())
+            history.push('/login') 
+        })
+    }
+    
+
     return (
         <Nav>
             <Logo src="/images/logo.svg" alt=""/>
-            <NavMenu>
+            {!userName ? (
+                <LoginContainer>
+                    <Login onClick={signIn}>Login</Login>
+                </LoginContainer>
+            ) : (<>
+                <NavMenu>
                 <a href="/#">
                     <img src="/images/home-icon.svg" alt="" />
                     <span>HOME</span>
@@ -31,13 +81,21 @@ function Header() {
                     <span>SERIES</span>
                 </a>
             </NavMenu>
-            <UserImg src="/images/dp3.jpg"/>
+            <SignOutContainer>
+                <UserImg src={userPhoto} alt={userName}/>
+                <DropDown>
+                    <span onClick={signOut}>Sign out</span>
+                </DropDown>
+          </SignOutContainer>
+            </>)
+            }
 
         </Nav>
     )
 }
 
 export default Header;
+
 
 const Nav = styled.nav`
     height: 70px;
@@ -46,6 +104,11 @@ const Nav = styled.nav`
     align-items: center;
     padding: 0 36px;
     overflow-x: hidden;
+    position: fixed;
+    top: 0;
+    left:0;
+    right:0;
+    z-index: 9999;
 
 `
 const Logo = styled.img`
@@ -90,12 +153,84 @@ const NavMenu = styled.div`
             opacity: 1;
         }
     }
+    @media (max-width: 768px) {
+    display: none;
+  }
 }
 `
 
-const UserImg = styled.img`
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    cursor: pointer;
+const Login = styled.div`
+    border: 1px solid #f9f9f9;
+    padding: 8px 16px;
+    border-radius: 4px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background-color: rgba(0,0,0,0.6);
+    transition: all 0.2s ease 0s;
+
+    &:hover{
+        background-color: #f9f9f9;
+        color: #000;
+        border-color: transparent;
+    }
 `
+
+const LoginContainer = styled.div`
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+`
+
+// const UserImg = styled.img`
+//     width: 48px;
+//     height: 48px;
+//     border-radius: 50%;
+//     cursor: pointer;
+// `
+
+const UserImg = styled.img`
+  height: 100%;
+  cursor: pointer;
+`;
+
+const DropDown = styled.div`
+  position: absolute;
+  top: 17px;
+  right: 40px;
+  background: rgb(19, 19, 19);
+  border: 1px solid rgba(151, 151, 151, 0.34);
+  border-radius: 4px;
+  box-shadow: rgb(0 0 0 / 50%) 0px 0px 18px 0px;
+  padding: 10px;
+  font-size: 14px;
+  letter-spacing: 3px;
+  width: 100px;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 9999;
+  &:hover{
+      color: cyan;
+  }
+`;
+
+const SignOutContainer = styled.div`
+  position: relative;
+  height: 48px;
+  width: 48px;
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  ${UserImg} {
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+  }
+  &:hover {
+    ${DropDown} {
+      opacity: 1;
+      transition-duration: 1s;
+    }
+  }
+`;
+

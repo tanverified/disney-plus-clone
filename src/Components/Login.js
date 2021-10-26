@@ -1,12 +1,49 @@
-import React from 'react'
+import React,{useEffect} from 'react'
 import styled from "styled-components";
 
+import { auth,provider } from "../firebase";
+import {setUserLogin} from "../features/user/userSlice";
+import {useDispatch} from "react-redux";
+import {useHistory} from 'react-router-dom';
+
+
 function Login() {
+    const dispatch = useDispatch();
+    const history = useHistory();
+
+    useEffect(()=>{
+        auth.onAuthStateChanged(async (user)=>{
+            if(user){
+                dispatch(setUserLogin({
+                    name: user.displayName,
+                    email: user.email,
+                    photo:user.photoURL
+                }))
+            history.push('/')
+            }
+        })
+    },[])
+
+    const signIn = () =>{
+        auth.signInWithPopup(provider)
+        .then((result)=>{
+            let user = result.user;
+            console.log(result)
+            dispatch(setUserLogin({
+                name: user.displayName,
+                email: user.email,
+                photo:user.photoURL
+            }))
+            history.push('/')
+        })
+    }
+
+
     return (
         <Container>
             <CTA>
                 <CTAlogoOne src="/images/cta-logo-one.svg"/>
-                <SignUp>GET THE DISNEY BUNDLE</SignUp>
+                <SignUp onClick={signIn}>GET THE DISNEY BUNDLE</SignUp>
                 <Description>
                     Lorem ipsum dolor sit amet consectetur adipisicing elit. Assumenda perspiciatis aperiam vitae nam fugiat.
                 </Description>
