@@ -27,3 +27,6 @@ function App() {
 }
 
 export default App;
+
+
+// React, Redux, Javascript, Gatsby, Nextjs, NodeJS, ExpressJS, HTML, CSS, Bootstrap, Tailwind, 
